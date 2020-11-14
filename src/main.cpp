@@ -1,9 +1,6 @@
-#include "vex.h"
+// yo this is ashna, i'm just trying to figure out how this github thing works
 
-// ---- START VEXCODE CONFIGURED DEVICES ----
-// Robot Configuration:
-// [Name]               [Type]        [Port(s)]
-// ---- END VEXCODE CONFIGURED DEVICES ----
+#include "vex.h"
 using namespace vex;
 competition Competition;
 
