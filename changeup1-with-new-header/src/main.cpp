@@ -133,7 +133,7 @@ void autonomous(void) {
   rollerStart();    
   wait(250, msec);
   turnLeft(48);
-  slideFwd(6.25, 40);
+  slideFwd(6.25, 50);
   shootStart();        
   wait(1000, msec);
   shootStop();        // scored 1st goal
@@ -141,20 +141,22 @@ void autonomous(void) {
   wait(250, msec);
   turnLeft(82);
   goFwd(27, 75);
-  slideFwd(5, 30);
+  slideFwd(5, 45);
   shootStart();     
   wait(1100, msec); 
   shootStop();        // scored 2nd goal
   goBack(20, 75);
-  turnLeft(50);
+  turnLeft(51.5);
   intakeStart();  
-  goFwd(59, 80);
+  goFwd(59, 90);
   turnRight(51);
-  slideFwd(24, 50);
+  slideFwd(24, 65);
   shootStart();
   turnRight(2);   //adjust
   wait(5000, msec);
   shootStop();
+  intakeStop();
+  rollerStop();
 }
 
 
