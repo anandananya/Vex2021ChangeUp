@@ -12,6 +12,8 @@
 extern int IntakeRunning;
 extern int RollerRunning;
 extern int ShooterRunning;
+extern int lim_pressed;
+extern int launched;
 
 void goFwd(float distance, float velocity);
 void slideFwd(float distance, float velocity);
@@ -21,7 +23,7 @@ void turnLeft(float degree);
 void turnRight(float degree);
 void intakeStart();
 void intakeStop();
-void intake ();
+void intakeAndRoller ();
 void outtake();
 void rollerStart();
 void rollerStop();
@@ -29,6 +31,7 @@ void rollerUp();
 void rollerDown();
 void shootStart();
 void shootStop();
+void limShoot();
 void shoot();
 void shootBack();
 void flipOpen();

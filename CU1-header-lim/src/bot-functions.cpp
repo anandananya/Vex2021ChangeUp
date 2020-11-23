@@ -4,6 +4,9 @@
 int IntakeRunning = 0;
 int RollerRunning = 0;
 int ShooterRunning = 0;
+int lim_pressed = 0;
+int launched = 0;
+// hey XD if you need to put more ints here do 'extern int IDK LOL;' in bot-functions.h
 
 void goFwd(float distance, float velocity){
     float numberDeg;
@@ -72,24 +75,23 @@ void turnRight(float degree){
 void intakeStart() {
     LeftIntake.spin(vex::directionType::fwd, INTAKESPD, vex::velocityUnits::pct);
     RightIntake.spin(vex::directionType::fwd, INTAKESPD, vex::velocityUnits::pct);
-    Roller.spin(vex::directionType::fwd, ROLLERSPD, vex::velocityUnits::pct);
     IntakeRunning = 1;
-    RollerRunning = 1;
 }
 
 void intakeStop() {
   LeftIntake.stop();
   RightIntake.stop();
-  Roller.stop();
   IntakeRunning = 0;
-  RollerRunning = 0;
 }
-void intake (){
+
+void intakeAndRoller (){
   if (IntakeRunning == 0){
     intakeStart();
+    rollerStart();
   }
   else{
     intakeStop();
+    rollerStop();
   }
 }
 
@@ -146,6 +148,21 @@ void shootStop(){
   Shooter.stop();
   ShooterRunning = 0;
 }
+
+void limShoot(){
+  // shootStart();
+  int i = 0;
+  while(!launched){
+    wait(50, msec);  
+    shootStart();
+    i = i+1;
+    mainControl.Screen.newLine();
+    mainControl.Screen.print(i);
+  }
+  wait(250, msec); //50
+  shootStop();
+}
+
 void shoot(){
  if (ShooterRunning == 0){
      shootStart();
