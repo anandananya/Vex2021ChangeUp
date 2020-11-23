@@ -11,7 +11,8 @@
 // LeftIntake           motor         1               
 // RightIntake          motor         3               
 // Roller               motor         8               
-// Shooter              motor         11              
+// Shooter              motor         11     
+// lim                  lim           H         
 // Controller1          controller                    
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
@@ -19,22 +20,8 @@
 
 using namespace vex;
 competition Competition;
-
-// vex::motor BackLeftMotor = vex::motor(vex::PORT20);
-// vex::motor BackRightMotor = vex::motor(vex::PORT2, true);
-// vex::motor FrontLeftMotor = vex::motor(vex::PORT5);
-// vex::motor FrontRightMotor = vex::motor(vex::PORT16, true);
-// vex::motor LeftIntake = vex::motor(vex::PORT1);
-// vex::motor RightIntake = vex::motor(vex::PORT3,true);
-// vex::motor Roller = vex::motor(vex::PORT8, true);
-// vex::motor Shooter = vex::motor(vex::PORT11, true);
-// vex::controller mainControl = controller();
-
 // //-------------------------
 // //12.56 inches per rotation
-
-
-
 void turnLeft(float);
 void turnRight(float);
 
@@ -106,51 +93,67 @@ void pre_auton(void) {
   mainControl.ButtonB.pressed(shootBack);
 }
 
-// int ballDetectTask(void) {
-//   int lastLimitSwitchState = 0;
-//   while(1) {
-//     if (BallDetectSwitch.pressing()) {
-//       if (!lastLimitSwitchState) {
-//         rollerStop();
-//         lastLimitSwitchState = 1;
-//       }
-//     }
-//     else {
-//       if (lastLimitSwitchState){
-//         lastLimitSwitchState = 0;  
-//       }
-//     }
-//     vex::task::sleep(50);
-//   }
-// }
+int ballDetectTask(void) {
+  int lastLimitSwitchState = 0;
+  while(1) {
+    if (lim.pressing()) {
+      if (!lastLimitSwitchState) {
+        rollerStop();
+        lastLimitSwitchState = 1;
+      }
+    }
+    else {
+      if (lastLimitSwitchState){
+        lastLimitSwitchState = 0;  
+      }
+    }
+    vex::task::sleep(50);
+  }
+}
+
+
+int LaunchTrackerTask(void){      // ashna 11/22
+int lim_pressed = 0;
+int launched = 0;
+  if (lim.pressing()){
+    lim_pressed = 1;
+    launched = 0;
+  }
+  else if (!lim.pressing()){
+    if (lim_pressed==1){
+      launched = 1;
+    }
+    lim_pressed = 0;
+  }
+}
 
 void autonomous(void) {
   flipOpen();
   intakeStart();
-  goFwd(2.5, 50);
+  goFwd(2.5, 95);
   wait(500, msec);
   intakeStop();
   rollerStart();    
   wait(250, msec);
   turnLeft(48);
-  slideFwd(6.25, 50);
+  slideFwd(6.25, 95);
   shootStart();        
   wait(1000, msec);
   shootStop();        // scored 1st goal
-  goBack(45, 50);
+  goBack(45, 95);
   wait(250, msec);
   turnLeft(82);
-  goFwd(27, 75);
-  slideFwd(5, 45);
+  goFwd(27, 95);
+  slideFwd(5, 95);
   shootStart();     
   wait(1100, msec); 
   shootStop();        // scored 2nd goal
-  goBack(20, 75);
+  goBack(20, 95);
   turnLeft(51.5);
   intakeStart();  
-  goFwd(59, 90);
+  goFwd(59, 95);
   turnRight(51);
-  slideFwd(24, 65);
+  slideFwd(24, 95);
   shootStart();
   turnRight(2);   //adjust
   wait(5000, msec);
@@ -184,7 +187,7 @@ void usercontrol(void) {
 int main() {
 
   // Start ball detect task
-    // vex::task t(ballDetectTask);
+    vex::task t(ballDetectTask);
 
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
