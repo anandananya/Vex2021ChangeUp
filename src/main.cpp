@@ -1,5 +1,4 @@
 // yo this is ashna, i'm just trying to figure out how this github thing works
-// hello
 
 #include "vex.h"
 using namespace vex;
@@ -182,15 +181,77 @@ void turnToRotationPID(double targetHeading){
   }
 }
 
+void drivePID(double targetDistance){
+  double error;
+  double maxAllowedError = 0.25; // allowed error in inches
+  double currentDistance;
+  double kP = 1;
+  double power;
+  bool timerExpired = false;
+  timer errorTimer = timer();
+  double errorTimerMax = 500; // time in msec
+
+  Brain.Screen.clearScreen();
+    
+  errorTimer.clear();
+
+  FrontRightMotor.resetRotation(); // used front right motor to control driving distance
+
+  currentDistance = 0;
+  error = targetDistance - currentDistance;
+
+  while( (fabs(error) > maxAllowedError) && (timerExpired == false) ) {
+    currentDistance = (FrontRightMotor.rotation(rotationUnits::deg) / 360) * WHEELCIRCUMFERENCE;
+    error = targetDistance - currentDistance;
+    power = error * kP;
+    
+    BackLeftMotor.spin(directionType::fwd, power, velocityUnits::pct);
+    FrontLeftMotor.spin(directionType::fwd, power, velocityUnits::pct);
+    FrontRightMotor.spin(directionType::fwd, power, velocityUnits::pct);
+    BackRightMotor.spin(directionType::fwd, power, velocityUnits::pct);
+
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("Distance= ");
+    Brain.Screen.print("%3.2f", currentDistance);
+    Brain.Screen.newLine();
+    Brain.Screen.print("Error= ");
+    Brain.Screen.print("%3.2f", error);
+    Brain.Screen.newLine();
+    Brain.Screen.print("Power= ");
+    Brain.Screen.print("%3.2f", power);
+    Brain.Screen.newLine();
+    Brain.Screen.print("Timer= ");
+    Brain.Screen.print("%2.6f", errorTimer.time());
+    
+    if(fabs(error) > maxAllowedError) {
+      errorTimer.clear();
+    } 
+    else {
+     if (errorTimer.time() > errorTimerMax) {
+       timerExpired = true;
+      }
+    }
+    vex::task::sleep(50);
+  }
+  BackLeftMotor.stop(brake);
+  FrontLeftMotor.stop(brake);
+  FrontRightMotor.stop(brake);
+  BackRightMotor.stop(brake);
+}
+
 void PIDTest () {
-  turnToRotationPID(30);
+  drivePID(30);
   wait(1000, msec);
-  turnToRotationPID(45);
+  drivePID(-30);
   wait(1000, msec);
-  turnToRotationPID(-30);
+  turnToRotationPID(90);
   wait(1000, msec);
-  turnToRotationPID(-45);
-  wait(1000, msec);  
+  drivePID(12);
+  wait(1000, msec);
+  drivePID(-12);
+  wait(1000, msec);
+  turnToRotationPID(-90);
+  wait(1000, msec);
 }
 
 void intake (){
@@ -339,6 +400,9 @@ void autonomous(void) {
   while (InertialSensor.isCalibrating()) {
     wait(100, msec);
   }
+
+  PIDTest(); // testing PID function
+
   flipOpen();
   intake();       //start intake
   goFwd(2.5, 50);
