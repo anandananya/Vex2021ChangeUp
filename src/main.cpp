@@ -12,6 +12,7 @@ vex::motor LeftIntake = vex::motor(vex::PORT1);
 vex::motor RightIntake = vex::motor(vex::PORT3,true);
 vex::motor Roller = vex::motor(vex::PORT8, true);
 vex::motor Shooter = vex::motor(vex::PORT11, true);
+vex::inertial InertialSensor = vex::inertial(vex::PORT10);
 vex::controller mainControl = controller();
 
 // //Filter function for driving ---------
@@ -127,6 +128,130 @@ void turnRight(float degree){
     FrontRightMotor.rotateFor(directionType::rev, numberRev,rotationUnits::rev,TURNING_SPEED,velocityUnits::pct, false);
     BackRightMotor.rotateFor(directionType::rev, numberRev,rotationUnits::rev,TURNING_SPEED,velocityUnits::pct);
 
+}
+
+void turnToRotationPID(double targetHeading){
+  double error;
+  double maxAllowedError = 0.5;
+  double currentHeading;
+  double kP = 1;
+  double power;
+  bool timerExpired = false;
+  timer errorTimer = timer();
+  double errorTimerMax = 500;
+
+  Brain.Screen.clearScreen();
+    
+  errorTimer.clear();
+
+  currentHeading = InertialSensor.rotation(rotationUnits::deg);
+  error = targetHeading - currentHeading;
+
+  while( (fabs(error) > maxAllowedError) && (timerExpired == false) ) {
+    currentHeading = InertialSensor.rotation(rotationUnits::deg);
+    error = targetHeading - currentHeading;
+    power = error * kP;
+    BackLeftMotor.spin(directionType::fwd, power, velocityUnits::pct);
+    FrontLeftMotor.spin(directionType::fwd, power, velocityUnits::pct);
+    FrontRightMotor.spin(directionType::rev, power, velocityUnits::pct);
+    BackRightMotor.spin(directionType::rev, power, velocityUnits::pct);
+
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("Heading= ");
+    Brain.Screen.print("%3.2f", currentHeading);
+    Brain.Screen.newLine();
+    Brain.Screen.print("Error= ");
+    Brain.Screen.print("%3.2f", error);
+    Brain.Screen.newLine();
+    Brain.Screen.print("Power= ");
+    Brain.Screen.print("%3.2f", power);
+    Brain.Screen.newLine();
+    Brain.Screen.print("Timer= ");
+    Brain.Screen.print("%2.6f", errorTimer.time());
+    
+    if(fabs(error) > maxAllowedError) {
+      errorTimer.clear();
+    } 
+    else {
+     if (errorTimer.time() > errorTimerMax) {
+       timerExpired = true;
+      }
+    }
+    vex::task::sleep(50);
+  }
+}
+
+void drivePID(double targetDistance){
+  double error;
+  double maxAllowedError = 0.25; // allowed error in inches
+  double currentDistance;
+  double kP = 1;
+  double power;
+  bool timerExpired = false;
+  timer errorTimer = timer();
+  double errorTimerMax = 500; // time in msec
+
+  Brain.Screen.clearScreen();
+    
+  errorTimer.clear();
+
+  FrontRightMotor.resetRotation(); // used front right motor to control driving distance
+
+  currentDistance = 0;
+  error = targetDistance - currentDistance;
+
+  while( (fabs(error) > maxAllowedError) && (timerExpired == false) ) {
+    currentDistance = (FrontRightMotor.rotation(rotationUnits::deg) / 360) * WHEELCIRCUMFERENCE;
+    error = targetDistance - currentDistance;
+    power = error * kP;
+    
+    BackLeftMotor.spin(directionType::fwd, power, velocityUnits::pct);
+    FrontLeftMotor.spin(directionType::fwd, power, velocityUnits::pct);
+    FrontRightMotor.spin(directionType::fwd, power, velocityUnits::pct);
+    BackRightMotor.spin(directionType::fwd, power, velocityUnits::pct);
+
+    Brain.Screen.setCursor(1, 1);
+    Brain.Screen.print("Distance= ");
+    Brain.Screen.print("%3.2f", currentDistance);
+    Brain.Screen.newLine();
+    Brain.Screen.print("Error= ");
+    Brain.Screen.print("%3.2f", error);
+    Brain.Screen.newLine();
+    Brain.Screen.print("Power= ");
+    Brain.Screen.print("%3.2f", power);
+    Brain.Screen.newLine();
+    Brain.Screen.print("Timer= ");
+    Brain.Screen.print("%2.6f", errorTimer.time());
+    
+    if(fabs(error) > maxAllowedError) {
+      errorTimer.clear();
+    } 
+    else {
+     if (errorTimer.time() > errorTimerMax) {
+       timerExpired = true;
+      }
+    }
+    vex::task::sleep(50);
+  }
+  BackLeftMotor.stop(brake);
+  FrontLeftMotor.stop(brake);
+  FrontRightMotor.stop(brake);
+  BackRightMotor.stop(brake);
+}
+
+void PIDTest () {
+  drivePID(30);
+  wait(1000, msec);
+  drivePID(-30);
+  wait(1000, msec);
+  turnToRotationPID(90);
+  wait(1000, msec);
+  drivePID(12);
+  wait(1000, msec);
+  drivePID(-12);
+  wait(1000, msec);
+  turnToRotationPID(-90);
+  wait(1000, msec);
 }
 
 void intake (){
@@ -245,6 +370,12 @@ void pre_auton(void) {
   mainControl.ButtonL2.pressed( rollerDown );
   mainControl.ButtonX.pressed(shoot);
   mainControl.ButtonB.pressed(shootBack);
+  InertialSensor.calibrate();
+  // waits for the Inertial Sensor to calibrate
+  while (InertialSensor.isCalibrating()) {
+    wait(100, msec);
+  }
+  InertialSensor.resetRotation();
 }
 
 // int ballDetectTask(void) {
@@ -266,6 +397,12 @@ void pre_auton(void) {
 // }
 
 void autonomous(void) {
+  while (InertialSensor.isCalibrating()) {
+    wait(100, msec);
+  }
+
+  PIDTest(); // testing PID function
+
   flipOpen();
   intake();       //start intake
   goFwd(2.5, 50);
