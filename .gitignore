@@ -39,3 +39,4 @@ compile_commands.json
 *.exe
 *.out
 *.app
+.DS_Store
